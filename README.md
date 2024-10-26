@@ -1,27 +1,62 @@
-instructions to run 
+```markdown
+# Instructions to Run the Project
 
+### Clone the Repository
+```bash
 git clone https://github.com/your-username/music-trends-project.git
-cd music-trends-project 
+cd music-trends-project
+```
 
-cd backend
-python3 -m venv venv
-source venv/bin/activate   # On Mac/Linux
-# venv\Scripts\activate    # On Windows
+---
 
+## Backend Setup
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
 
-pip install -r requirements.txt
+2. Create and activate a virtual environment:
+   - **Mac/Linux:**
+     ```bash
+     python3 -m venv venv
+     source venv/bin/activate
+     ```
+   - **Windows:**
+     ```bash
+     python3 -m venv venv
+     venv\Scripts\activate
+     ```
 
-python app.py
+3. Install the required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-The backend will be running at http://127.0.0.1:5000.
+4. Start the backend server:
+   ```bash
+   python app.py
+   ```
 
+   The backend will be running at [http://127.0.0.1:5000](http://127.0.0.1:5000).
 
-cd frontend
-npm install
-npm install react-chartjs-2 chart.js
+---
 
-npm start
+## Frontend Setup
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
 
+2. Install the required dependencies:
+   ```bash
+   npm install
+   npm install react-chartjs-2 chart.js
+   ```
 
+3. Start the React app:
+   ```bash
+   npm start
+   ```
 
-The React app will be running at http://localhost:3000.
+   The React app will be running at [http://localhost:3000](http://localhost:3000).
+```
