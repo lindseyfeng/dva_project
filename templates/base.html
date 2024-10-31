@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Trends Project</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('music_trends') }}">Music Trends</a> |
+        <a href="{{ url_for('similar_artists') }}">Similar Artists</a> |
+        <a href="{{ url_for('album_art') }}">Album Art</a>
+    </nav>
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

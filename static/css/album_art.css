@@ -1,0 +1,25 @@
+/* album_art.css */
+#album-art-form {
+    margin-bottom: 20px;
+}
+
+#album-art-form textarea {
+    width: 100%;
+    height: 100px;
+    padding: 8px;
+    margin-bottom: 10px;
+}
+
+#album-art-form button {
+    padding: 8px 12px;
+}
+
+#album-art-result {
+    margin-top: 20px;
+}
+
+#album-art-result img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ddd;
+}
