@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Popular Artists{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/popular_artists.css') }}">
+{% endblock %}
+
+{% block content %}
+<h1 class="mt-5">Popular Artists</h1>
+<ul class="list-group mt-4">
+    {% for artist in artists %}
+    <li class="list-group-item">{{ artist }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}

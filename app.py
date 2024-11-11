@@ -1,38 +1,21 @@
 from flask import Flask, render_template, request, jsonify
 import pandas as pd
+from datetime import datetime
 
 app = Flask(__name__)
 
-# Mock data for demonstration
+# Mock data for demonstration purposes
 mock_data = pd.DataFrame({
-    'artist': ['Artist A', 'Artist B', 'Artist A', 'Artist C'],
+    'artist': ['Artist A', 'Artist B', 'Artist C', 'Artist D'],
     'streams': [5000, 6000, 7000, 8000],
     'date': ['2023-01', '2023-02', '2023-03', '2023-04']
 })
 
-# Homepage route
+# Route for Home Page
 @app.route('/')
 def home():
-    return render_template('base.html')
-
-# Route for Music Trends
-@app.route('/music-trends', methods=['GET', 'POST'])
-def music_trends():
-    if request.method == 'POST':
-        artist = request.form.get('artist')
-        artist_data = mock_data[mock_data['artist'] == artist]
-        return jsonify(artist_data.to_dict(orient='records'))
-    return render_template('music_trends.html')
-
-# Route for Similar Artists
-@app.route('/similar-artists', methods=['GET', 'POST'])
-def similar_artists():
-    if request.method == 'POST':
-        artist = request.form.get('artist')
-        # Placeholder similar artists - replace with ML logic
-        similar_artists = ['Artist B', 'Artist C']
-        return jsonify({'similar_artists': similar_artists})
-    return render_template('similar_artists.html')
+    current_year = datetime.now().year
+    return render_template('index.html', current_year=current_year)
 
 # Route for Album Art Generation
 @app.route('/album-art', methods=['GET', 'POST'])
@@ -40,9 +23,27 @@ def album_art():
     if request.method == 'POST':
         lyrics = request.form.get('lyrics')
         # Placeholder URL for generated album art - replace with actual generation code
-        image_url = "https://example.com/generated-album-art.png"
+        image_url = "https://via.placeholder.com/400x400.png?text=Generated+Album+Art"
         return jsonify({'image_url': image_url})
     return render_template('album_art.html')
+
+# Route for Music Recommendations
+@app.route('/music-recommendations', methods=['GET', 'POST'])
+def music_recommendations():
+    if request.method == 'POST':
+        preferences = request.form.get('preferences')
+        # Placeholder recommendations - replace with actual logic
+        recommendations = ['Song A', 'Song B', 'Song C']
+        return jsonify({'recommendations': recommendations})
+    return render_template('music_recommendations.html')
+
+
+# Route for Popular Artists
+@app.route('/popular-artists')
+def popular_artists():
+    # Placeholder popular artists - replace with actual data
+    popular_artists_list = ['Artist X', 'Artist Y', 'Artist Z']
+    return render_template('popular_artists.html', artists=popular_artists_list)
 
 if __name__ == '__main__':
     app.run(debug=True)

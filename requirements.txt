@@ -1,2 +1,10 @@
 Flask
 pandas
+datetime
+transformers
+torch
+diffusers
+pillow
+torch 
+torchvision 
+torchaudio

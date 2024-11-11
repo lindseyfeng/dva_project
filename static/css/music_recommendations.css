@@ -1,0 +1,17 @@
+/* music_recommendations.css */
+
+#music-recommendations-form {
+    margin-bottom: 20px;
+}
+
+#music-recommendations-result ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+#music-recommendations-result li {
+    background-color: #f8f9fa;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+}

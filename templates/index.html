@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-container text-center">
+    <h1 class="display-4">Welcome to StreamCheese</h1>
+    <p class="lead">Discover music trends, get recommendations, and generate album art from your lyrics.</p>
+    <hr class="my-4">
+    <div class="row">
+        <!-- Album Art Generation -->
+        <div class="col-md-4">
+            <div class="card mb-4 shadow-sm">
+                <img src="{{ url_for('static', filename='images/album_art.png') }}" class="card-img-top fixed-image" alt="Album Art Generation">
+                <div class="card-img-overlay d-flex flex-column justify-content-end">
+                    <a href="/album-art" class="btn btn-primary btn-block">Go to Album Art</a>
+                </div>
+            </div>
+        </div>
+        <!-- Music Recommendations -->
+        <div class="col-md-4">
+            <div class="card mb-4 shadow-sm">
+                <img src="{{ url_for('static', filename='images/music_recommendations.jpg') }}" class="card-img-top fixed-image" alt="Music Recommendations">
+                <div class="card-img-overlay d-flex flex-column justify-content-end">
+                    <a href="/music-recommendations" class="btn btn-primary btn-block">Get Recommendations</a>
+                </div>
+            </div>
+        </div>
+        <!-- Popular Artists -->
+        <div class="col-md-4">
+            <div class="card mb-4 shadow-sm">
+                <img src="{{ url_for('static', filename='images/popular_artists.jpg') }}" class="card-img-top fixed-image" alt="Popular Artists">
+                <div class="card-img-overlay d-flex flex-column justify-content-end">
+                    <a href="/popular-artists" class="btn btn-primary btn-block">View Artists</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

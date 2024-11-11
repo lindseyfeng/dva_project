@@ -1,15 +1,23 @@
 {% extends "base.html" %}
-{% block content %}
-<h1>Generate Custom Album Art</h1>
-<form id="album-art-form">
-    <textarea name="lyrics" placeholder="Enter lyrics or genres" required></textarea>
-    <button type="submit">Generate Art</button>
-</form>
-<div id="album-art-result"></div>
-{% endblock %}
+
+{% block title %}Album Art Generation{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/album_art.css') }}">
 {% endblock %}
+
+{% block content %}
+<h1 class="mt-5">Generate Album Art from Lyrics</h1>
+<form id="album-art-form" class="mt-4">
+    <div class="form-group">
+        <label for="lyrics">Enter Lyrics:</label>
+        <textarea id="lyrics" name="lyrics" class="form-control" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Generate Album Art</button>
+</form>
+<div id="album-art-result"></div>
+{% endblock %}
+
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/album_art.js') }}"></script>
 {% endblock %}

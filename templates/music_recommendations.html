@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Music Recommendations{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/music_recommendations.css') }}">
+{% endblock %}
+
+{% block content %}
+<h1 class="mt-5">Music Recommendations</h1>
+
+<form id="music-recommendations-form" class="mt-4">
+    <div class="form-group">
+        <label for="preferences">Enter Your Preferences:</label>
+        <input type="text" id="preferences" name="preferences" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Get Recommendations</button>
+</form>
+
+<div id="recommendations-result" class="mt-4"></div>
+{% endblock %}
