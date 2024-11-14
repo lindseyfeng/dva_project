@@ -8,9 +8,34 @@
 
 {% block content %}
 <h1 class="mt-5">Popular Artists</h1>
-<ul class="list-group mt-4">
-    {% for artist in artists %}
-    <li class="list-group-item">{{ artist }}</li>
-    {% endfor %}
-</ul>
+
+<div class="container mt-4">
+    <form id="trends-form">
+        <label for="artist">Select an Artist:</label>
+        <select id="artist" name="artist" class="form-control mb-3">
+            {% for artist in artists %}
+            <option value="{{ artist }}">{{ artist }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="time-period">Select Time Period:</label>
+        <select id="time-period" name="time-period" class="form-control mb-3">
+            <option value="3_months">Last 3 Months</option>
+            <option value="1_year">Last 1 Year</option>
+            <option value="5_years">Last 5 Years</option>
+            <option value="10_years">Last 10 Years</option>
+        </select>
+
+        <button type="submit" class="btn btn-primary">Show Popularity</button>
+    </form>
+
+    <div id="chart-container" class="mt-5">
+        <!-- Line chart will be rendered here -->
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://d3js.org/d3.v6.min.js"></script>
+<script src="{{ url_for('static', filename='js/music_trends.js') }}"></script>
 {% endblock %}
