@@ -1,21 +1,52 @@
-{% extends "base.html" %}
-
-{% block title %}Music Recommendations{% endblock %}
-
+{% extends "base.html" %} {% block title %}Music Recommendations{% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/music_recommendations.css') }}">
-{% endblock %}
-
-{% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/music_recommendations.css') }}"
+/>
+{% endblock %} {% block content %}
 <h1 class="mt-5">Music Recommendations</h1>
 
 <form id="music-recommendations-form" class="mt-4">
-    <div class="form-group">
-        <label for="preferences">Enter Your Preferences:</label>
-        <input type="text" id="preferences" name="preferences" class="form-control" required>
-    </div>
-    <button type="submit" class="btn btn-primary">Get Recommendations</button>
+  <div class="form-group">
+    <label for="preferences">Enter Your Preferences:</label>
+    <input
+      type="text"
+      id="preferences"
+      name="preferences"
+      class="form-control"
+      required
+    />
+  </div>
+  <button type="submit" class="btn btn-primary">Get Recommendations</button>
 </form>
 
 <div id="recommendations-result" class="mt-4"></div>
+
+<script>
+  document
+    .getElementById("music-recommendations-form")
+    .addEventListener("submit", async function (event) {
+      event.preventDefault(); // Prevent default form submission
+
+      // Get the value from the input field
+      const preferences = document.getElementById("preferences").value;
+
+      // Send the data to the server
+      const response = await fetch("/get-recommendations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ preferences: preferences }),
+      });
+
+      // Parse the JSON response
+      const data = await response.json();
+
+      // Update the result container with the server's response
+      const resultDiv = document.getElementById("recommendations-result");
+      resultDiv.innerText = data.recommendations;
+    });
+</script>
 {% endblock %}
