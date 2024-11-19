@@ -15,7 +15,9 @@ class ArtistRecommender:
         """
         self.artist_cluster_path = artist_cluster_path
         self.spotify_data_path = spotify_data_path
-        self.artist_cluster_df = self._load_csv(artist_cluster_path)
+        self.artist_cluster_df = self._load_csv(
+            artist_cluster_path, skip_bad_lines=True
+        )
         self.spotify_data_df = self._load_csv(spotify_data_path, skip_bad_lines=True)
 
     @staticmethod
@@ -141,8 +143,8 @@ class ArtistRecommender:
 
 
 def main():
-    artist_cluster_path = "/content/artist_clusters (1).csv"
-    spotify_data_path = "/content/spotify_dataset.csv"
+    artist_cluster_path = "artist_clusters.csv"
+    spotify_data_path = "spotify_dataset.csv"
 
     recommender = ArtistRecommender(artist_cluster_path, spotify_data_path)
     favorite_artist = input("Enter your favorite artist: ")
@@ -158,6 +160,7 @@ def main():
         print("No artists found in the cluster.")
         return
 
+    # matrix completion part
     filtered_artist_df = recommender.get_filtered_artist_data(similar_artists)
     cross_df = recommender.create_interaction_matrix(filtered_artist_df)
 

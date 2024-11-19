@@ -1,7 +1,9 @@
+import os
 from artist_recommendation.cf_recommendations import ArtistRecommender
 from flask import Flask, render_template, request, jsonify
 import pandas as pd
 from datetime import datetime
+
 
 app = Flask(__name__)
 
@@ -55,29 +57,45 @@ def popular_artists():
 
 @app.route("/get-recommendations", methods=["POST"])
 def get_recommendations():
-    # Extract the JSON data sent from the frontend
-    data = request.get_json()
-    favorite_artist = data.get("favorite_artist")  # Get the 'preferences' input
+    try:
+        # Extract the JSON data sent from the frontend
+        data = request.get_json()
+        if not data or "favorite_artist" not in data:
+            return jsonify({"error": "Missing 'favorite_artist' in the request"}), 400
 
-    cluster_id = recommender.get_cluster_id_for_artist(favorite_artist)
-    if cluster_id == "Artist not found":
-        print("Sorry, artist not found.")
-        return
+        favorite_artist = data.get("favorite_artist").strip()
+        print(favorite_artist)
+        if not favorite_artist:
+            return jsonify({"error": "'favorite_artist' must not be empty"}), 400
 
-    # find similar artists that were grouped into the same cluster in preprocessing
-    similar_artists = recommender.get_artists_in_cluster(cluster_id)
-    if not similar_artists:
-        print("No artists found in the cluster.")
-        return
-    recommendations = f"Recommendations based on your preferences: {similar_artists}"
+        # Get the cluster ID for the artist
+        cluster_id = recommender.get_cluster_id_for_artist(favorite_artist)
+        if cluster_id == "Artist not found":
+            return jsonify({"error": f"Artist '{favorite_artist}' not found"}), 404
 
-    # Return the recommendations as a JSON response
-    return jsonify({"recommendations": recommendations})
+        # Find similar artists in the same cluster
+        similar_artists = recommender.get_artists_in_cluster(cluster_id)
+        if not similar_artists:
+            return jsonify({"error": "No similar artists found in the cluster"}), 404
+
+        # Create recommendations
+        recommendations = (
+            f"Recommendations based on your preferences: {similar_artists}"
+        )
+        return jsonify({"recommendations": recommendations}), 200
+
+    except Exception as e:
+        # Log the exception for debugging
+        print(f"An error occurred: {e}")
+        return jsonify(
+            {"error": "An unexpected error occurred, please try again later"}
+        ), 500
 
 
 if __name__ == "__main__":
-    artist_cluster_path = "/content/artist_clusters (1).csv"
-    spotify_data_path = "/content/spotify_dataset.csv"
-
-    recommender = ArtistRecommender(artist_cluster_path, spotify_data_path)
+    print(os.getcwd())
+    recommender = ArtistRecommender(
+        artist_cluster_path="artist_clusters.csv",
+        spotify_data_path="spotify_dataset.csv",
+    )
     app.run(debug=True)
