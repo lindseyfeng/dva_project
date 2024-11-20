@@ -22,7 +22,8 @@
 </form>
 
 <div id="recommendations-result" class="mt-4"></div>
-
+<!-- we might have too many things per cluster right now -->
+<!-- add a d3 thing here where we can select ones we like from the recommendations and then it will update the recommendations -->
 <script>
   document
     .getElementById("music-recommendations-form")
@@ -33,20 +34,35 @@
       const preferences = document.getElementById("preferences").value;
 
       // Send the data to the server
-      const response = await fetch("/get-recommendations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ preferences: preferences }),
-      });
+      try {
+        const response = await fetch("/get-recommendations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ favorite_artist: preferences }),
+        });
 
-      // Parse the JSON response
-      const data = await response.json();
+        // Parse the JSON response
+        const data = await response.json();
 
-      // Update the result container with the server's response
-      const resultDiv = document.getElementById("recommendations-result");
-      resultDiv.innerText = data.recommendations;
+        // Update the result container with the server's response
+        const resultDiv = document.getElementById("recommendations-result");
+
+        if (response.ok) {
+          // Successful response
+          resultDiv.innerText = data.recommendations;
+        } else {
+          // Handle errors returned by the server
+          resultDiv.innerText = data.error || "An unexpected error occurred.";
+        }
+      } catch (error) {
+        // Handle network or unexpected errors
+        const resultDiv = document.getElementById("recommendations-result");
+        resultDiv.innerText = "An error occurred while connecting to the server.";
+        console.error("Error:", error);
+      }
     });
 </script>
+
 {% endblock %}
