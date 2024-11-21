@@ -95,7 +95,7 @@ def get_recommendations():
 if __name__ == "__main__":
     print(os.getcwd())
     recommender = ArtistRecommender(
-        artist_cluster_path="artist_clusters.csv",
-        spotify_data_path="spotify_dataset.csv",
+        artist_cluster_path="./artist_recommendation/artist_clusters.csv",
+        spotify_data_path="./artist_recommendation/spotify_dataset.csv",
     )
     app.run(debug=True)
