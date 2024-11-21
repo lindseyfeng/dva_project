@@ -65,3 +65,21 @@
 button[type="submit"] {
     width: 100%;
 }
+
+.container-fluid {
+    padding: 0;
+}
+
+.row {
+    margin: 0;
+}
+
+#chart-container {
+    height: 100vh; /* Adjust height as needed */
+    background-color: inherit;
+}
+.container {
+    max-width: 100%;
+    /* max-width: 960px; */
+}
+
