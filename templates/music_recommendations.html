@@ -9,7 +9,7 @@
 
 <form id="music-recommendations-form" class="mt-4">
   <div class="form-group">
-    <label for="preferences">Enter Your Preferences:</label>
+    <label for="preferences">Enter your favorite artist:</label>
     <input
       type="text"
       id="preferences"
@@ -21,48 +21,177 @@
   <button type="submit" class="btn btn-primary">Get Recommendations</button>
 </form>
 
+<head>
+  <style>
+    path.link {
+      fill: none;
+      stroke: #666;
+      stroke-width: 1.5px;
+    }
+
+    circle {
+      fill: #ccc;
+      stroke: #fff;
+      stroke: black;
+      stroke-width: 1.5px;
+    }
+
+    text {
+      fill: #000;
+      font: 10px sans-serif;
+      pointer-events: none;
+    }
+  </style>
+
+  <meta charset="utf-8" />
+  <title></title>
+</head>
+
 <div id="recommendations-result" class="mt-4"></div>
+
 <!-- we might have too many things per cluster right now -->
 <!-- add a d3 thing here where we can select ones we like from the recommendations and then it will update the recommendations -->
-<script>
-  document
-    .getElementById("music-recommendations-form")
-    .addEventListener("submit", async function (event) {
-      event.preventDefault(); // Prevent default form submission
+<body>
+  <script type="text/javascript" src="../lib/d3.v5.min.js"></script>
+  <!-- Load D3.js globally -->
+  <div id="visualization">
+    <!-- Visualization will be created here -->
+  </div>
+  <script>
+    document
+      .getElementById("music-recommendations-form")
+      .addEventListener("submit", async function (event) {
+        event.preventDefault();
 
-      // Get the value from the input field
-      const preferences = document.getElementById("preferences").value;
+        // Get the user preference
+        const preferences = document.getElementById("preferences").value;
 
-      // Send the data to the server
-      try {
-        const response = await fetch("/get-recommendations", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ favorite_artist: preferences }),
-        });
+        // Send the preference to the server
+        try {
+          const response = await fetch("/get-recommendations", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ favorite_artist: preferences }),
+          });
 
-        // Parse the JSON response
-        const data = await response.json();
+          if (!response.ok) {
+            throw new Error("Failed to fetch recommendations");
+          }
 
-        // Update the result container with the server's response
-        const resultDiv = document.getElementById("recommendations-result");
+          // Parse the JSON response
+          const data = await response.json();
+          const recommendations = data.recommendations;
 
-        if (response.ok) {
-          // Successful response
-          resultDiv.innerText = data.recommendations;
-        } else {
-          // Handle errors returned by the server
-          resultDiv.innerText = data.error || "An unexpected error occurred.";
+          console.log(recommendations);
+
+          // Prepare data for D3
+          const nodes = [{ id: preferences, degree: recommendations.length }]; // Source node
+          const links = [];
+
+          recommendations.forEach((rec, index) => {
+            nodes.push({ id: rec, degree: 1 }); // Target node
+            links.push({ source: preferences, target: rec, value: 1 }); // Edge
+          });
+
+          // Create the visualization
+          createVisualization(nodes, links);
+        } catch (error) {
+          console.error("Error:", error);
+          const resultDiv = document.getElementById("recommendations-result");
+          resultDiv.innerText =
+            "An error occurred while connecting to the server.";
         }
-      } catch (error) {
-        // Handle network or unexpected errors
-        const resultDiv = document.getElementById("recommendations-result");
-        resultDiv.innerText = "An error occurred while connecting to the server.";
-        console.error("Error:", error);
-      }
-    });
-</script>
+      });
+
+    function createVisualization(nodes, links) {
+      // Set up the SVG dimensions
+      const width = 800,
+        height = 600;
+
+      const svg = d3
+        .select("#visualization") // Select the correct container
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      // Set up the simulation
+      const simulation = d3
+        .forceSimulation(nodes)
+        .force(
+          "link",
+          d3
+            .forceLink(links)
+            .id((d) => d.id)
+            .distance(150)
+        )
+        .force("charge", d3.forceManyBody().strength(-400))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+      // Create links (edges)
+      const link = svg
+        .append("g")
+        .selectAll("line")
+        .data(links)
+        .enter()
+        .append("line")
+        .attr("stroke-width", 2)
+        .attr("stroke", "#999");
+
+      // Create nodes
+      const node = svg
+        .append("g")
+        .selectAll("circle")
+        .data(nodes)
+        .enter()
+        .append("circle")
+        .attr("r", 10)
+        .attr("fill", (d, i) => (i === 0 ? "#ff5733" : "#33c3ff")) // Source node is distinct
+        .call(
+          d3
+            .drag()
+            .on("start", (event, d) => {
+              if (!event.active) simulation.alphaTarget(0.3).restart();
+              d.fx = d.x;
+              d.fy = d.y;
+            })
+            .on("drag", (event, d) => {
+              d.fx = event.x;
+              d.fy = event.y;
+            })
+            .on("end", (event, d) => {
+              if (!event.active) simulation.alphaTarget(0);
+              d.fx = null;
+              d.fy = null;
+            })
+        );
+
+      // Add labels to nodes
+      const label = svg
+        .append("g")
+        .selectAll("text")
+        .data(nodes)
+        .enter()
+        .append("text")
+        .text((d) => d.id)
+        .attr("font-size", 10)
+        .attr("dy", 3);
+
+      // Update positions on tick
+      simulation.on("tick", () => {
+        link
+          .attr("x1", (d) => d.source.x)
+          .attr("y1", (d) => d.source.y)
+          .attr("x2", (d) => d.target.x)
+          .attr("y2", (d) => d.target.y);
+
+        node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+
+        label.attr("x", (d) => d.x + 12).attr("y", (d) => d.y);
+      });
+    }
+  </script>
+</body>
 
 {% endblock %}

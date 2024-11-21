@@ -78,11 +78,7 @@ def get_recommendations():
         if not similar_artists:
             return jsonify({"error": "No similar artists found in the cluster"}), 404
 
-        # Create recommendations
-        recommendations = (
-            f"Recommendations based on your preferences: {similar_artists}"
-        )
-        return jsonify({"recommendations": recommendations}), 200
+        return jsonify({"recommendations": similar_artists}), 200
 
     except Exception as e:
         # Log the exception for debugging
