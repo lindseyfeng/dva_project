@@ -1,6 +1,19 @@
 from flask import Flask, render_template, request, jsonify
 import pandas as pd
 from datetime import datetime
+import requests
+
+
+SEARCH_API_URL = "https://api.chartmetric.com/api/search"
+AUTH_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mzk4ODkzOSwidGltZXN0YW1wIjoxNzMyMTY2NjU2NjMyLCJpYXQiOjE3MzIxNjY2NTYsImV4cCI6MTczMjE3MDI1Nn0.2Q4uqVGuoEcjEQXYKk-sGPCOxmrJveoSIgfj5sZwIKY"
+ALBUMS_API_URL = "https://api.chartmetric.com/api/artist/{artist_id}/albums"
+
+# Headers for authorization
+headers = {
+    "Authorization": AUTH_TOKEN
+}
+
+
 
 app = Flask(__name__)
 
@@ -38,12 +51,34 @@ def music_recommendations():
     return render_template('music_recommendations.html')
 
 
-# Route for Popular Artists
-@app.route('/popular-artists')
+@app.route('/popular-artists', methods=['GET', 'POST'])
 def popular_artists():
-    # Placeholder popular artists - replace with actual data
-    popular_artists_list = ['Artist X', 'Artist Y', 'Artist Z']
-    return render_template('popular_artists.html', artists=popular_artists_list)
+    if request.method == 'POST':
+        artist_name = request.form.get('artist_name')
+        headers = {"Authorization": AUTH_TOKEN}
+        
+        # Fetch artist data based on the entered name
+        search_response = requests.get(f"{SEARCH_API_URL}?q={artist_name}&limit=1", headers=headers)
+        search_response.raise_for_status()  # Raise HTTP errors
+        search_data = search_response.json().get('obj', {}).get('artists', [])
+        
+        if not search_data:
+            print("No artists found in the search response.")
+            return render_template('popular_artists.html', error="No artists found.")
+        
+        first_artist = search_data[0]
+        first_artist_id = first_artist.get('id')
+        print(f"First Artist: {first_artist['name']} (ID: {first_artist_id})")
+        
+        if not first_artist_id:
+            print("First artist ID is missing.")
+            return render_template('popular_artists.html', error="Artist ID not found.")
+        
+        # Render the template with artist info
+        return render_template('popular_artists.html', artist=first_artist)
+    else:
+        # Render the form for GET requests
+        return render_template('popular_artists.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
