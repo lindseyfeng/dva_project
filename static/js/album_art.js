@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (data.image_url) {
                 // Display the image using the URL
+                console.log(data.image_url);
                 document.getElementById('album-art-result').innerHTML = `
                     <h3 class="mt-4">Generated Album Art:</h3>
                     <img src="${data.image_url}" alt="Album Art" class="img-fluid mt-3">

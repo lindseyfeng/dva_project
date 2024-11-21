@@ -8,3 +8,5 @@ pillow
 torch 
 torchvision 
 torchaudio
+nltk
+better_profanity

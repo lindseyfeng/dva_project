@@ -77,18 +77,11 @@ def generate_image(prompt, output_file="album_art.png"):
     # Save the image
     image.save(output_file)
     print(f"Album art saved as '{output_file}'")
+    return output_file
 
-def main():
+def make_album_art(lyrics, output_file="static/images/generated_album_art.png"):
     # Ensure NLTK data is downloaded
     install_nltk_data()
-
-    # Provide the path to your lyrics file
-    lyrics_file = "lyrics.txt"
-
-    # Read the lyrics
-    lyrics = read_lyrics(lyrics_file)
-    if not lyrics:
-        return
 
     # Print the lyrics to confirm
     print(f"Lyrics:\n{lyrics}\n")
@@ -111,7 +104,47 @@ def main():
 
     # Generate the image
     print("Generating album art...")
-    generate_image(image_prompt)
+    # TODO: Uncomment before landing
+    output_file = generate_image(image_prompt, output_file=output_file)
+    return output_file
+
+
+def main():
+    # # Ensure NLTK data is downloaded
+    # install_nltk_data()
+
+    # Provide the path to your lyrics file
+    lyrics_file = "lyrics.txt"
+
+    # Read the lyrics
+    lyrics = read_lyrics(lyrics_file)
+    if not lyrics:
+        return
+    
+    make_album_art(lyrics)
+
+    # # Print the lyrics to confirm
+    # print(f"Lyrics:\n{lyrics}\n")
+
+    # # Determine device for summarizer
+    # device = 0 if torch.cuda.is_available() else -1
+
+    # # Summarize the lyrics
+    # print("Summarizing lyrics...")
+    # summary = summarize_text(lyrics, device)
+    # print(f"\nSummary:\n{summary}\n")
+
+    # # Clean the summary
+    # clean_summary = clean_text(summary)
+    # print(f"Clean Summary:\n{clean_summary}\n")
+
+    # # Create the image prompt
+    # image_prompt = f"An abstract album cover art illustrating: {clean_summary}. Digital art, vibrant colors."
+    # print(f"Image Prompt:\n{image_prompt}\n")
+
+    # # Generate the image
+    # print("Generating album art...")
+    # generate_image(image_prompt)
 
 if __name__ == "__main__":
     main()
