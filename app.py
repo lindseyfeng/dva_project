@@ -41,11 +41,17 @@ def album_art():
 
         # Placeholder URL for generated album art - replace with actual generation code
         try:
+            # if len(lyrics) < 10:  # Example: Check if lyrics are too short
+            #     return jsonify({'error': 'Prompt too short. Please provide more details.'}), 400
+            
             # Generate album art
             output_file = make_album_art(lyrics, output_file="static/images/generated_album_art.png")
 
             # Return the path to the generated image
             return jsonify({'image_url': f"/{output_file}"})
+        except ValueError as e:
+            # Handle expected errors from generate_album_art
+            return jsonify({'error': str(e)}), 400
         except Exception as e:
             print(f"Error during album art generation: {e}")
             return jsonify({'error': 'An error occurred during album art generation.'}), 500

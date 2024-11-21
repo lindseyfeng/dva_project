@@ -92,10 +92,14 @@ def make_album_art(lyrics, output_file="static/images/generated_album_art.png"):
     # Summarize the lyrics
     print("Summarizing lyrics...")
     summary = summarize_text(lyrics, device)
+    if not summary.strip():
+        raise ValueError("Summarized prompt is empty. Ensure the input prompt/lyrics are descriptive.")
     print(f"\nSummary:\n{summary}\n")
 
     # Clean the summary
     clean_summary = clean_text(summary)
+    if not clean_summary.strip():
+        raise ValueError("Cleaned output is empty after processing. Make sure that the input prompt/lyrics are not profane.")
     print(f"Clean Summary:\n{clean_summary}\n")
 
     # Create the image prompt
