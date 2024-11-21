@@ -1,15 +1,54 @@
-{% extends "base.html" %} {% block title %}Music Recommendations{% endblock %}
+{% extends "base.html" %}
+{% block title %}Music Recommendations{% endblock %}
 {% block extra_css %}
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/music_recommendations.css') }}"
 />
-{% endblock %} {% block content %}
+<style>
+  /* Additional CSS for prettier nodes */
+  .node circle {
+    stroke: #fff;
+    stroke-width: 2.5px;
+  }
+
+  .node text {
+    font-family: 'Arial', sans-serif;
+    font-size: 12px;
+    pointer-events: none;
+    fill: #333;
+  }
+
+  .link {
+    stroke: #999;
+    stroke-opacity: 0.6;
+  }
+
+  /* Hover effect */
+  .node:hover circle {
+    stroke: #ff9800;
+    stroke-width: 3px;
+  }
+
+  /* Tooltip styling */
+  .tooltip {
+    position: absolute;
+    text-align: center;
+    padding: 6px;
+    font-size: 12px;
+    background: #fff;
+    border: 1px solid #ccc;
+    pointer-events: none;
+    border-radius: 4px;
+  }
+</style>
+{% endblock %}
+{% block content %}
 <h1 class="mt-5">Music Recommendations</h1>
 
 <form id="music-recommendations-form" class="mt-4">
   <div class="form-group">
-    <label for="preferences">Enter Your Preferences:</label>
+    <label for="preferences">Enter Your Favorite Artist:</label>
     <input
       type="text"
       id="preferences"
@@ -22,8 +61,11 @@
 </form>
 
 <div id="recommendations-result" class="mt-4"></div>
-<!-- we might have too many things per cluster right now -->
-<!-- add a d3 thing here where we can select ones we like from the recommendations and then it will update the recommendations -->
+
+<!-- Include D3.js Library -->
+<script src="https://d3js.org/d3.v6.min.js"></script>
+
+<!-- JavaScript code -->
 <script>
   document
     .getElementById("music-recommendations-form")
@@ -45,13 +87,153 @@
 
         // Parse the JSON response
         const data = await response.json();
+        console.log('Data received:', data); // For debugging purposes
 
         // Update the result container with the server's response
         const resultDiv = document.getElementById("recommendations-result");
 
         if (response.ok) {
           // Successful response
-          resultDiv.innerText = data.recommendations;
+          // Clear previous content
+          resultDiv.innerHTML = '';
+
+          // Create SVG element
+          const width = resultDiv.offsetWidth;
+          const height = 400;
+          const svg = d3.select(resultDiv)
+            .append('svg')
+            .attr('width', '100%')
+            .attr('height', height);
+
+          // Prepare nodes and links using data directly
+          const nodes = [{ id: preferences, group: 0 }].concat(
+            data.map((artist, i) => ({ id: artist, group: i + 1 }))
+          );
+
+          const links = data.map(artist => ({
+            source: preferences,
+            target: artist
+          }));
+
+          // Set up simulation
+          const simulation = d3.forceSimulation(nodes)
+            .force('link', d3.forceLink(links).id(d => d.id).distance(150))
+            .force('charge', d3.forceManyBody().strength(-300))
+            .force('center', d3.forceCenter(width / 2, height / 2));
+
+          // Define tooltip
+          const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+          // Draw links
+          const link = svg.append('g')
+              .attr('class', 'links')
+            .selectAll('line')
+            .data(links)
+            .enter().append('line')
+              .attr('class', 'link')
+              .attr('stroke-width', 2);
+
+          // Draw nodes
+          const node = svg.append('g')
+              .attr('class', 'nodes')
+            .selectAll('g')
+            .data(nodes)
+            .enter().append('g')
+              .attr('class', 'node')
+              .on('click', nodeClicked) // Add click event
+              .call(d3.drag()
+                  .on('start', dragStarted)
+                  .on('drag', dragged)
+                  .on('end', dragEnded)
+              );
+
+          node.append('circle')
+              .attr('r', 30)
+              .attr('fill', d => {
+                if (d.id === preferences) return 'url(#gradient)';
+                else return '#2196f3';
+              });
+
+          // Add gradient to the main node
+          svg.append("defs").append("linearGradient")
+              .attr("id", "gradient")
+              .attr("x1", "0%")
+              .attr("y1", "0%")
+              .attr("x2", "100%")
+              .attr("y2", "100%")
+            .selectAll("stop")
+              .data([
+                {offset: "0%", color: "#ff5722"},
+                {offset: "100%", color: "#ff9800"}
+              ])
+            .enter().append("stop")
+              .attr("offset", d => d.offset)
+              .attr("stop-color", d => d.color);
+
+          node.append('text')
+              .attr('dx', 0)
+              .attr('dy', 5)
+              .attr('text-anchor', 'middle')
+              .text(d => d.id)
+              .attr('font-size', '12px');
+
+          simulation.on('tick', () => {
+              link
+                  .attr('x1', d => d.source.x)
+                  .attr('y1', d => d.source.y)
+                  .attr('x2', d => d.target.x)
+                  .attr('y2', d => d.target.y);
+
+              node
+                  .attr('transform', d => `translate(${d.x},${d.y})`);
+          });
+
+          // Functions for dragging
+          function dragStarted(event, d) {
+              if (!event.active) simulation.alphaTarget(0.3).restart();
+              d.fx = d.x;
+              d.fy = d.y;
+          }
+
+          function dragged(event, d) {
+              d.fx = event.x;
+              d.fy = event.y;
+          }
+
+          function dragEnded(event, d) {
+              if (!event.active) simulation.alphaTarget(0);
+              d.fx = null;
+              d.fy = null;
+          }
+
+          // Function when a node is clicked
+          function nodeClicked(event, d) {
+              if (d.id !== preferences) {
+                  // Update preferences to the clicked node
+                  document.getElementById('preferences').value = d.id;
+                  // Trigger form submission to get new recommendations
+                  document.getElementById('music-recommendations-form').dispatchEvent(new Event('submit'));
+              }
+          }
+
+          // Tooltip functions
+          function mouseOver(event, d) {
+            tooltip.transition()
+              .duration(200)
+              .style("opacity", .9);
+            tooltip.html(d.id)
+              .style("left", (event.pageX + 10) + "px")
+              .style("top", (event.pageY - 15) + "px");
+          }
+
+          function mouseOut(event, d) {
+            tooltip.transition()
+              .duration(500)
+              .style("opacity", 0);
+          }
+
         } else {
           // Handle errors returned by the server
           resultDiv.innerText = data.error || "An unexpected error occurred.";
