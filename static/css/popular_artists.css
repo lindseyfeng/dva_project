@@ -75,7 +75,7 @@ button[type="submit"] {
 }
 
 #chart-container {
-    height: 100vh; /* Adjust height as needed */
+    height: 72vh; /* Adjust height as needed */
     background-color: inherit;
 }
 .container {

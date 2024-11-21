@@ -3,6 +3,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const trendsForm = document.getElementById('trends-form');
     const chartContainer = document.getElementById('chart-container');
 
+    
+    // Default chart data
+    artistName = trendsForm.artist.value;
+    const defaultTimePeriod = '3_months';
+    const defaultData = generateDummyData(artistName, defaultTimePeriod);
+    // Render the default chart
+    renderLineChart(defaultData, defaultTimePeriod, artistName);
+
     trendsForm.onsubmit = (event) => {
         event.preventDefault();
         const artistSelect = trendsForm.artist;
