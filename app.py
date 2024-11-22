@@ -68,6 +68,13 @@ def get_recommendations():
         if not favorite_artist:
             return jsonify({"error": "'favorite_artist' must not be empty"}), 400
 
+        num_similar_artists = data.get("num_similar_artists")
+        print(num_similar_artists)
+        if not num_similar_artists:
+            num_similar_artists = 10
+        else:
+            num_similar_artists = int(num_similar_artists.strip())
+
         # Get the cluster ID for the artist
         cluster_id = recommender.get_cluster_id_for_artist(favorite_artist)
         if cluster_id == "Artist not found":
@@ -83,7 +90,7 @@ def get_recommendations():
                 "name": similar_artists[i],
                 "image_url": spotify.get_artist_image(similar_artists[i]),
             }
-            for i in range(min(10, len(similar_artists)))
+            for i in range(min(num_similar_artists, len(similar_artists)))
         ] + [
             {
                 "name": favorite_artist,

@@ -165,10 +165,11 @@
             .enter()
             .append("g")
             .attr("class", "node")
-            .on("click", function (d) {
-              if (selectedNodes.has(d.name)) {
+            .on("click", function (event, d) {
+              console.log(d);
+              if (selectedNodes.has(d.id)) {
                 // If the node is already in the set, remove it
-                selectedNodes.delete(d.name);
+                selectedNodes.delete(d.id);
 
                 // Optional: Change the appearance to indicate the node is deselected
                 d3.select(this)
@@ -176,7 +177,7 @@
                   .style("fill", "rgba(0, 0, 255, 0.0)");
               } else {
                 // If the node is not in the set, add it
-                selectedNodes.add(d.name);
+                selectedNodes.add(d.id);
 
                 // Optional: Change the appearance to indicate the node is selected
                 d3.select(this)
