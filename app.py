@@ -3,7 +3,7 @@ from artist_recommendation.cf_recommendations import ArtistRecommender
 from flask import Flask, render_template, request, jsonify
 import pandas as pd
 from datetime import datetime
-
+import spotify_artist_query as spotify
 
 app = Flask(__name__)
 
@@ -78,11 +78,20 @@ def get_recommendations():
         if not similar_artists:
             return jsonify({"error": "No similar artists found in the cluster"}), 404
 
-        # Create recommendations
-        # recommendations = (
-        #   {similar_artists}
-        # )
-        return jsonify(similar_artists[:10]), 200
+        response = [
+            {
+                "name": similar_artists[i],
+                "image_url": spotify.get_artist_image(similar_artists[i]),
+            }
+            for i in range(min(10, len(similar_artists)))
+        ] + [
+            {
+                "name": favorite_artist,
+                "image_url": spotify.get_artist_image(favorite_artist),
+            }
+        ]
+
+        return jsonify(response), 200
 
     except Exception as e:
         # Log the exception for debugging
