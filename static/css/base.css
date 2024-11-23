@@ -13,7 +13,8 @@ body {
 }
 
 .container {
-    max-width: 960px;
+    max-width: 100%;
+    /* max-width: 960px; */
 }
 
 /* Navbar Styling */
@@ -112,6 +113,8 @@ p {
     background: rgba(0, 0, 0, 0.4); /* Subtle dark overlay for contrast */
     color: #fff;
     text-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5); /* Slight shadow for better text clarity */
+    z-index: 1; /* Ensure it's above the image */
+    color: white; /* Text remains visible */
 }
 
 /* Button styling in overlay */
@@ -120,3 +123,115 @@ p {
     padding: 0.75rem 1rem;
     border-radius: 0; /* Remove border radius to match card edge */
 }
+/* Enhanced Card Styling */
+.card {
+    border: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background-color: #ffffff;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+    transform: scale(1.05); /* Slight zoom-in effect */
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Buttons - Make them stand out */
+.btn-block {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: #fff;
+    font-size: 1.1rem;
+    padding: 0.8rem 1.2rem;
+    text-transform: uppercase;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.btn-block:hover {
+    background: linear-gradient(135deg, #0056b3, #004494);
+    transform: scale(1.05); /* Slight zoom effect */
+}
+
+/* Card Overlay Improvements */
+.card-img-overlay {
+    background: rgba(0, 0, 0, 0.5); /* Darker overlay for better contrast */
+    color: #fff;
+    text-align: center; /* Center-align content */
+}
+
+/* Homepage Header */
+.content-container h1 {
+    font-size: 3.5rem;
+    color: #007bff;
+    animation: fadeIn 1.5s ease-in-out;
+}
+
+.content-container p {
+    color: #555;
+    animation: fadeIn 2s ease-in-out;
+}
+
+/* Fade-in Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+
+
+/* Ensure the main container fills the viewport */
+main {
+    min-height: 100vh; /* Full viewport height */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Flexbox layout for rows of cards */
+.card-row {
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch; /* Make cards equal height */
+    width: 100%; /* Use full width */
+    max-width: 1200px; /* Optional: Set a max width for alignment */
+    margin: 0 auto; /* Center horizontally */
+}
+
+/* Cards take equal space */
+.card {
+    flex: 1; /* Equal width for all cards */
+    margin: 0 15px; /* Spacing between cards */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Align content inside */
+    height: auto;
+}
+
+/* Ensure images and content adjust */
+.fixed-image {
+    /* height: auto; Remove fixed height to allow scaling */
+    max-height: 300px; /* Adjust as needed */
+}
+
+/* Buttons stay at the bottom */
+.card-img-overlay {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    text-align: center;
+}
+
+/* Optional styling to remove excess vertical space */
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%; /* Full height */
+}
+

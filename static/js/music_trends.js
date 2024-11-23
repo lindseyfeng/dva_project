@@ -1,29 +1,41 @@
+let artistName;
 document.addEventListener('DOMContentLoaded', () => {
     const trendsForm = document.getElementById('trends-form');
     const chartContainer = document.getElementById('chart-container');
 
+    
+    // Default chart data
+    artistName = trendsForm.artist.value;
+    const defaultTimePeriod = '3_months';
+    const defaultData = generateDummyData(artistName, defaultTimePeriod);
+    // Render the default chart
+    renderLineChart(defaultData, defaultTimePeriod, artistName);
+
     trendsForm.onsubmit = (event) => {
         event.preventDefault();
-        const artist = trendsForm.artist.value;
+        const artistSelect = trendsForm.artist;
+        // const artist = artistSelect.options[artistSelect.selectedIndex].text;
+        artistName = artistSelect.value;
+        console.log(artistName)
         const timePeriod = trendsForm['time-period'].value;
 
         // Generate dummy data for the selected artist and time period
-        const data = generateDummyData(artist, timePeriod);
+        const data = generateDummyData(artistName, timePeriod);
 
         // Clear previous chart (if any)
         chartContainer.innerHTML = '';
 
         // Render the line chart with the dummy data
-        renderLineChart(data, timePeriod);
+        renderLineChart(data, timePeriod, artistName);
     };
 
-    window.addEventListener("resize", () => {
-        const newWidth = document.getElementById("chart-container").clientWidth - margin.left - margin.right;
-        const newHeight = document.getElementById("chart-container").clientHeight - margin.top - margin.bottom;
+    // window.addEventListener("resize", () => {
+    //     const newWidth = document.getElementById("chart-container").clientWidth - margin.left - margin.right;
+    //     const newHeight = document.getElementById("chart-container").clientHeight - margin.top - margin.bottom;
     
-        d3.select("#chart-container svg")
-          .attr("viewBox", `0 0 ${newWidth + margin.left + margin.right} ${newHeight + margin.top + margin.bottom}`);
-    });
+    //     d3.select("#chart-container svg")
+    //       .attr("viewBox", `0 0 ${newWidth + margin.left + margin.right} ${newHeight + margin.top + margin.bottom}`);
+    // });
 
     // Function to generate dummy data based on selected time period
     function generateDummyData(artist, timePeriod) {
@@ -73,7 +85,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to render the line chart with D3.js
     function renderLineChart(data, timePeriod) {
+        console.log(artist);
         const margin = { top: 20, right: 30, bottom: 50, left: 50 };
+        window.addEventListener("resize", () => {
+            const newWidth = document.getElementById("chart-container").clientWidth - margin.left - margin.right;
+            const newHeight = document.getElementById("chart-container").clientHeight - margin.top - margin.bottom;
+        
+            d3.select("#chart-container svg")
+              .attr("viewBox", `0 0 ${newWidth + margin.left + margin.right} ${newHeight + margin.top + margin.bottom}`);
+        });
         // Define the initial width and height based on the window size or container size
         const width = document.getElementById("chart-container").clientWidth - margin.left - margin.right;
         const height = document.getElementById("chart-container").clientHeight - margin.top - margin.bottom;
@@ -105,9 +125,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const y = d3.scaleLinear()
                     .domain([0, 100])
                     .range([height, 0]);
-        svg.append("g")
-           .call(d3.axisLeft(y))
-           .attr("class", "y-axis");
+        // svg.append("g")
+        //    .call(d3.axisLeft(y))
+        //    .attr("class", "y-axis");
     
         // Define gradient
         const gradient = svg.append("defs")
@@ -169,10 +189,32 @@ document.addEventListener('DOMContentLoaded', () => {
            .on("mouseover", function(event, d) {
                 d3.select(this).transition().attr("r", 6).attr("fill", "#0056b3");
                 tooltip.transition().duration(200).style("opacity", 0.9);
+                const mouseX = event.offsetX; // Get offset relative to SVG
+                const mouseY = event.offsetY; // Get offset relative to SVG
+                // Additional adjustments for tooltip positioning
+                const tooltipWidth = tooltip.node().offsetWidth;
+                const tooltipHeight = tooltip.node().offsetHeight;
+                // Ensure tooltip stays within SVG bounds
+                let left = mouseX; // Adjust horizontal offset
+                let top = mouseY - 20; // Adjust vertical offset
+                const svgWidth = svg.node().clientWidth;
+                const svgHeight = svg.node().clientHeight;
+
+                if (left + tooltipWidth > svgWidth) {
+                left = svgWidth - tooltipWidth - 10; // Position to the left if needed
+                }
+                if (top - tooltipHeight < 0) {
+                top = mouseY + 10; // Position below the circle if needed
+                }
+
                 tooltip.html(`<strong>Date:</strong> ${d.date.toLocaleDateString()}<br><strong>Popularity:</strong> ${d.popularity}`)
-                       .style("left", (event.pageX + 5) + "px")
-                       .style("top", (event.pageY - 28) + "px");
-           })
+                    .style("left", `${left}px`)
+                    .style("top", `${top}px`);
+            })
+        //         tooltip.html(`<strong>Date:</strong> ${d.date.toLocaleDateString()}<br><strong>Popularity:</strong> ${d.popularity}`)
+        //                .style("left", (event.pageX) + "px")
+        //                .style("top", (event.pageY) + "px");
+        //    })
            .on("mouseout", function() {
                 d3.select(this).transition().attr("r", 4).attr("fill", "#007bff");
                 tooltip.transition().duration(500).style("opacity", 0);
@@ -186,20 +228,20 @@ document.addEventListener('DOMContentLoaded', () => {
            .attr("class", "x-label")
            .text("Date");
     
-        svg.append("text")
-           .attr("transform", "rotate(-90)")
-           .attr("x", -height / 2)
-           .attr("y", -margin.left + 15)
-           .attr("text-anchor", "middle")
-           .attr("class", "y-label")
-           .text("Popularity");
+        // svg.append("text")
+        //    .attr("transform", "rotate(-90)")
+        //    .attr("x", -height / 2)
+        //    .attr("y", -margin.left + 15)
+        //    .attr("text-anchor", "middle")
+        //    .attr("class", "y-label")
+        //    .text("Popularity");
     
         svg.append("text")
            .attr("x", width / 2)
-           .attr("y", 10)
+        //    .attr("y", -10)
            .attr("text-anchor", "middle")
            .attr("class", "chart-title")
-           .text("Artist Popularity Over Time");
+           .text(`${artistName} Popularity Over Time`);
     }    
     
 
