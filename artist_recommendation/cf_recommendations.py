@@ -108,11 +108,9 @@ class ArtistRecommender:
         for artist in artist_names:
             if accepted_artists_count >= max_artists:
                 break
-            response = input(f"Do you like {artist}? (y/n): ").strip().lower()
-            if response == "y":
-                artist_index = artist_names.index(artist)
-                interactions[artist_index] = 1
-                accepted_artists_count += 1
+            artist_index = artist_names.index(artist)
+            interactions[artist_index] = 1
+            accepted_artists_count += 1
         return interactions
 
     def recommend_artists(

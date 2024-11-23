@@ -1,9 +1,8 @@
-{% extends "base.html" %} {% block title %}Music Recommendations{% endblock %}
+{% extends "base.html" %}
+{% block title %}Music Recommendations{% endblock %}
+
 {% block extra_css %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/music_recommendations.css') }}"
-/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/music_recommendations.css') }}" />
 <style>
   /* Additional CSS for prettier nodes */
   .node circle {
@@ -41,24 +40,30 @@
     border-radius: 4px;
   }
 </style>
-{% endblock %} {% block content %}
+{% endblock %}
+
+{% block content %}
 <h1 class="mt-5">Music Recommendations</h1>
+
+<!-- Added Instructions -->
+<p>Please enter your favorite artist and click "Get Recommendations" to see similar artists. You can then select artists from the graph to get further recommendations based on your selections.</p>
 
 <form id="music-recommendations-form" class="mt-4">
   <div class="form-group">
     <label for="preferences">Enter Your Favorite Artist:</label>
-    <input
-      type="text"
-      id="preferences"
-      name="preferences"
-      class="form-control"
-      required
-    />
+    <input type="text" id="preferences" name="preferences" class="form-control" required />
   </div>
   <button type="submit" class="btn btn-primary">Get Recommendations</button>
 </form>
 
 <div id="recommendations-result" class="mt-4"></div>
+
+<!-- New "Process Selections" Button -->
+<div id="process-button-container" class="mt-4" style="display: none;">
+  <button id="process-selections" class="btn btn-success">
+    Process Selections
+  </button>
+</div>
 
 <!-- Include D3.js Library -->
 <script src="https://d3js.org/d3.v6.min.js"></script>
@@ -95,6 +100,10 @@
           // Clear previous content
           resultDiv.innerHTML = "";
           let selectedNodes = new Set();
+          // Make the "Process Selections" button visible
+          document.getElementById("process-button-container").style.display =
+            "block";
+
           // Create SVG element
           const width = resultDiv.offsetWidth;
           const height = 400;
@@ -104,8 +113,10 @@
             .attr("width", "100%")
             .attr("height", height);
 
+          // Extract the favorite artist from the data
           const favorite_artist = data.pop();
-          // Prepare nodes and links using data directly
+
+          // Prepare nodes and links
           const nodes = [
             {
               id: favorite_artist.name,
@@ -130,20 +141,10 @@
             .forceSimulation(nodes)
             .force(
               "link",
-              d3
-                .forceLink(links)
-                .id((d) => d.id)
-                .distance(150)
+              d3.forceLink(links).id((d) => d.id).distance(150)
             )
             .force("charge", d3.forceManyBody().strength(-300))
             .force("center", d3.forceCenter(width / 2, height / 2));
-
-          // // Define tooltip
-          // const tooltip = d3
-          //   .select("body")
-          //   .append("div")
-          //   .attr("class", "tooltip")
-          //   .style("opacity", 0);
 
           // Draw links
           const link = svg
@@ -171,7 +172,7 @@
                 // If the node is already in the set, remove it
                 selectedNodes.delete(d.id);
 
-                // Optional: Change the appearance to indicate the node is deselected
+                // Change the appearance to indicate the node is deselected
                 d3.select(this)
                   .select("circle")
                   .style("fill", "rgba(0, 0, 255, 0.0)");
@@ -179,10 +180,10 @@
                 // If the node is not in the set, add it
                 selectedNodes.add(d.id);
 
-                // Optional: Change the appearance to indicate the node is selected
+                // Change the appearance to indicate the node is selected
                 d3.select(this)
                   .select("circle")
-                  .style("fill", "rgba(0, 0, 255, 0.3)"); // Change the color to indicate selection (you can choose any color)
+                  .style("fill", "rgba(0, 0, 255, 0.3)"); // Change the color to indicate selection
               }
               console.log(selectedNodes);
             })
@@ -197,7 +198,7 @@
           node
             .append("circle")
             .attr("r", 37)
-            .attr("fill", "rgba(0, 0, 255, 0.0)") // Blue with 30% opacity
+            .attr("fill", "rgba(0, 0, 255, 0.0)") // Blue with 0% opacity
             .attr("stroke-width", 0);
           node
             .append("image")
@@ -244,21 +245,160 @@
             d.fy = null;
           }
 
-          // Function when a node is clicked
-          function nodeClicked(event, d) {}
+          // Event listener for the "Process Selections" button
+          document
+            .getElementById("process-selections")
+            .addEventListener("click", async function () {
+              // Convert the Set to an Array
+              const selectedArtists = Array.from(selectedNodes);
+              console.log("Selected Artists:", selectedArtists);
 
-          // // Tooltip functions
-          // function mouseOver(event, d) {
-          //   tooltip.transition().duration(200).style("opacity", 0.9);
-          //   tooltip
-          //     .html(d.id)
-          //     .style("left", event.pageX + 10 + "px")
-          //     .style("top", event.pageY - 15 + "px");
-          // }
+              if (selectedArtists.length === 0) {
+                alert("Please select at least one artist.");
+                return;
+              }
 
-          // function mouseOut(event, d) {
-          //   tooltip.transition().duration(500).style("opacity", 0);
-          // }
+              // Send the selected artists to the server
+              try {
+                const processResponse = await fetch("/process-selections", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ selected_artists: selectedArtists }),
+                });
+
+                const processResult = await processResponse.json();
+
+                if (processResponse.ok) {
+                  // Handle successful processing
+                  console.log("Server response:", processResult);
+
+                  // Display the songs returned by the server
+                  displaySongs(processResult.artists);
+                } else {
+                  // Handle server errors
+                  alert(
+                    processResult.error || "An error occurred while processing."
+                  );
+                }
+              } catch (error) {
+                // Handle network errors
+                alert("Failed to send selections to the server.");
+                console.error("Error:", error);
+              }
+            });
+
+          // Function to display songs returned by the server
+          function displaySongs(recommendations) {
+            // Clear previous content
+            resultDiv.innerHTML = "";
+            console.log("Recommendations received:", recommendations);
+
+            // Fetch the favorite artist from previous data
+            const favorite_artist = nodes.find(
+              (node) => node.id === preferences
+            );
+
+            // Prepare new nodes and links
+            const newNodes = [favorite_artist];
+            const newLinks = [];
+
+            // Map recommendations to nodes and links
+            recommendations.forEach((artistName, i) => {
+              const artistNode = {
+                id: artistName,
+                group: i + 1,
+                image: data.find((d) => d.name === artistName)?.image_url,
+              };
+              newNodes.push(artistNode);
+              newLinks.push({
+                source: favorite_artist.id,
+                target: artistName,
+              });
+            });
+
+            // Create SVG element
+            const width = resultDiv.offsetWidth;
+            const height = 400;
+            const svg = d3
+              .select(resultDiv)
+              .append("svg")
+              .attr("width", "100%")
+              .attr("height", height);
+
+            // Set up simulation
+            const simulation = d3
+              .forceSimulation(newNodes)
+              .force(
+                "link",
+                d3.forceLink(newLinks).id((d) => d.id).distance(150)
+              )
+              .force("charge", d3.forceManyBody().strength(-300))
+              .force("center", d3.forceCenter(width / 2, height / 2));
+
+            // Draw links
+            const link = svg
+              .append("g")
+              .attr("class", "links")
+              .selectAll("line")
+              .data(newLinks)
+              .enter()
+              .append("line")
+              .attr("class", "link")
+              .attr("stroke-width", 2);
+
+            // Draw nodes
+            const node = svg
+              .append("g")
+              .attr("class", "nodes")
+              .selectAll("g")
+              .data(newNodes)
+              .enter()
+              .append("g")
+              .attr("class", "node")
+              .call(
+                d3
+                  .drag()
+                  .on("start", dragStarted)
+                  .on("drag", dragged)
+                  .on("end", dragEnded)
+              );
+
+            node
+              .append("circle")
+              .attr("r", 37)
+              .attr("fill", "rgba(0, 0, 255, 0.0)") // Blue with 0% opacity
+              .attr("stroke-width", 0);
+
+            node
+              .append("image")
+              .attr("xlink:href", (d) => d.image) // Set the image URL
+              .attr("x", -30) // Center the image horizontally
+              .attr("y", -30) // Center the image vertically
+              .attr("width", 60) // Set image width
+              .attr("height", 60) // Set image height
+              .attr("clip-path", "circle(30px at center)"); // Optional: Make the image circular
+
+            node
+              .append("text")
+              .attr("dx", 0)
+              .attr("dy", 45)
+              .attr("text-anchor", "middle")
+              .text((d) => d.id)
+              .attr("font-size", "12px");
+
+            simulation.on("tick", () => {
+              link
+                .attr("x1", (d) => d.source.x)
+                .attr("y1", (d) => d.source.y)
+                .attr("x2", (d) => d.target.x)
+                .attr("y2", (d) => d.target.y);
+
+              node.attr("transform", (d) => `translate(${d.x},${d.y})`);
+            });
+          }
+
         } else {
           // Handle errors returned by the server
           resultDiv.innerText = data.error || "An unexpected error occurred.";
