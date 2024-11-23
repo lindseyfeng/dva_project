@@ -10,7 +10,7 @@ import requests
 
 
 SEARCH_API_URL = "https://api.chartmetric.com/api/search"
-AUTH_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mzk4ODkzOSwidGltZXN0YW1wIjoxNzMyMTY2NjU2NjMyLCJpYXQiOjE3MzIxNjY2NTYsImV4cCI6MTczMjE3MDI1Nn0.2Q4uqVGuoEcjEQXYKk-sGPCOxmrJveoSIgfj5sZwIKY"
+AUTH_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mzk4ODkzOSwidGltZXN0YW1wIjoxNzMyMzY0NjA5NzAyLCJpYXQiOjE3MzIzNjQ2MDksImV4cCI6MTczMjM2ODIwOX0.UTpsLhDf1lPdlRGC8UM2_EjrubW2lMqwq_nuImzD_FY"
 ALBUMS_API_URL = "https://api.chartmetric.com/api/artist/{artist_id}/albums"
 
 # Headers for authorization
