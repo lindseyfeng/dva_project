@@ -1,21 +1,416 @@
 {% extends "base.html" %}
-
 {% block title %}Music Recommendations{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/music_recommendations.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/music_recommendations.css') }}" />
+<style>
+  /* Additional CSS for prettier nodes */
+  .node circle {
+    stroke: #fff;
+    stroke-width: 2.5px;
+  }
+
+  .node text {
+    font-family: "Arial", sans-serif;
+    font-size: 12px;
+    pointer-events: none;
+    fill: #333;
+  }
+
+  .link {
+    stroke: #999;
+    stroke-opacity: 0.6;
+  }
+
+  /* Hover effect */
+  .node:hover circle {
+    stroke: #ff9800;
+    stroke-width: 3px;
+  }
+
+  /* Tooltip styling */
+  .tooltip {
+    position: absolute;
+    text-align: center;
+    padding: 6px;
+    font-size: 12px;
+    background: #fff;
+    border: 1px solid #ccc;
+    pointer-events: none;
+    border-radius: 4px;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
 <h1 class="mt-5">Music Recommendations</h1>
 
+<!-- Added Instructions -->
+<p>Please enter your favorite artist and click "Get Recommendations" to see similar artists. You can then select artists from the graph to get further recommendations based on your selections.</p>
+
 <form id="music-recommendations-form" class="mt-4">
-    <div class="form-group">
-        <label for="preferences">Enter Your Preferences:</label>
-        <input type="text" id="preferences" name="preferences" class="form-control" required>
-    </div>
-    <button type="submit" class="btn btn-primary">Get Recommendations</button>
+  <div class="form-group">
+    <label for="preferences">Enter Your Favorite Artist:</label>
+    <input type="text" id="preferences" name="preferences" class="form-control" required />
+  </div>
+  <button type="submit" class="btn btn-primary">Get Recommendations</button>
 </form>
 
 <div id="recommendations-result" class="mt-4"></div>
+
+<!-- New "Process Selections" Button -->
+<div id="process-button-container" class="mt-4" style="display: none;">
+  <button id="process-selections" class="btn btn-success">
+    Process Selections
+  </button>
+</div>
+
+<!-- Include D3.js Library -->
+<script src="https://d3js.org/d3.v6.min.js"></script>
+
+<!-- JavaScript code -->
+<script>
+  document
+    .getElementById("music-recommendations-form")
+    .addEventListener("submit", async function (event) {
+      event.preventDefault(); // Prevent default form submission
+
+      // Get the value from the input field
+      const preferences = document.getElementById("preferences").value;
+
+      // Send the data to the server
+      try {
+        const response = await fetch("/get-recommendations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ favorite_artist: preferences }),
+        });
+
+        // Parse the JSON response
+        const data = await response.json();
+        console.log("Data received:", data); // For debugging purposes
+
+        // Update the result container with the server's response
+        const resultDiv = document.getElementById("recommendations-result");
+
+        if (response.ok) {
+          // Successful response
+          // Clear previous content
+          resultDiv.innerHTML = "";
+          let selectedNodes = new Set();
+          // Make the "Process Selections" button visible
+          document.getElementById("process-button-container").style.display =
+            "block";
+
+          // Create SVG element
+          const width = resultDiv.offsetWidth;
+          const height = 400;
+          const svg = d3
+            .select(resultDiv)
+            .append("svg")
+            .attr("width", "100%")
+            .attr("height", height);
+
+          // Extract the favorite artist from the data
+          const favorite_artist = data.pop();
+
+          // Prepare nodes and links
+          const nodes = [
+            {
+              id: favorite_artist.name,
+              group: 0,
+              image: favorite_artist.image_url,
+            },
+          ].concat(
+            data.map((artist, i) => ({
+              id: artist.name,
+              group: i + 1,
+              image: artist.image_url,
+            }))
+          );
+
+          const links = data.map((artist) => ({
+            source: favorite_artist.name,
+            target: artist.name,
+          }));
+
+          // Set up simulation
+          const simulation = d3
+            .forceSimulation(nodes)
+            .force(
+              "link",
+              d3.forceLink(links).id((d) => d.id).distance(150)
+            )
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+          // Draw links
+          const link = svg
+            .append("g")
+            .attr("class", "links")
+            .selectAll("line")
+            .data(links)
+            .enter()
+            .append("line")
+            .attr("class", "link")
+            .attr("stroke-width", 2);
+
+          // Draw nodes
+          const node = svg
+            .append("g")
+            .attr("class", "nodes")
+            .selectAll("g")
+            .data(nodes)
+            .enter()
+            .append("g")
+            .attr("class", "node")
+            .on("click", function (event, d) {
+              console.log(d);
+              if (selectedNodes.has(d.id)) {
+                // If the node is already in the set, remove it
+                selectedNodes.delete(d.id);
+
+                // Change the appearance to indicate the node is deselected
+                d3.select(this)
+                  .select("circle")
+                  .style("fill", "rgba(0, 0, 255, 0.0)");
+              } else {
+                // If the node is not in the set, add it
+                selectedNodes.add(d.id);
+
+                // Change the appearance to indicate the node is selected
+                d3.select(this)
+                  .select("circle")
+                  .style("fill", "rgba(0, 0, 255, 0.3)"); // Change the color to indicate selection
+              }
+              console.log(selectedNodes);
+            })
+            .call(
+              d3
+                .drag()
+                .on("start", dragStarted)
+                .on("drag", dragged)
+                .on("end", dragEnded)
+            );
+
+          node
+            .append("circle")
+            .attr("r", 37)
+            .attr("fill", "rgba(0, 0, 255, 0.0)") // Blue with 0% opacity
+            .attr("stroke-width", 0);
+          node
+            .append("image")
+            .attr("xlink:href", (d) => d.image) // Set the image URL
+            .attr("x", -30) // Center the image horizontally
+            .attr("y", -30) // Center the image vertically
+            .attr("width", 60) // Set image width
+            .attr("height", 60) // Set image height
+            .attr("clip-path", "circle(30px at center)"); // Optional: Make the image circular
+
+          node
+            .append("text")
+            .attr("dx", 0)
+            .attr("dy", 45)
+            .attr("text-anchor", "middle")
+            .text((d) => d.id)
+            .attr("font-size", "12px");
+
+          simulation.on("tick", () => {
+            link
+              .attr("x1", (d) => d.source.x)
+              .attr("y1", (d) => d.source.y)
+              .attr("x2", (d) => d.target.x)
+              .attr("y2", (d) => d.target.y);
+
+            node.attr("transform", (d) => `translate(${d.x},${d.y})`);
+          });
+
+          // Functions for dragging
+          function dragStarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+          }
+
+          function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+          }
+
+          function dragEnded(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+          }
+
+          // Event listener for the "Process Selections" button
+          document
+            .getElementById("process-selections")
+            .addEventListener("click", async function () {
+              // Convert the Set to an Array
+              const selectedArtists = Array.from(selectedNodes);
+              console.log("Selected Artists:", selectedArtists);
+
+              if (selectedArtists.length === 0) {
+                alert("Please select at least one artist.");
+                return;
+              }
+
+              // Send the selected artists to the server
+              try {
+                const processResponse = await fetch("/process-selections", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ selected_artists: selectedArtists }),
+                });
+
+                const processResult = await processResponse.json();
+
+                if (processResponse.ok) {
+                  // Handle successful processing
+                  console.log("Server response:", processResult);
+
+                  // Display the songs returned by the server
+                  displaySongs(processResult.artists);
+                } else {
+                  // Handle server errors
+                  alert(
+                    processResult.error || "An error occurred while processing."
+                  );
+                }
+              } catch (error) {
+                // Handle network errors
+                alert("Failed to send selections to the server.");
+                console.error("Error:", error);
+              }
+            });
+
+          // Function to display songs returned by the server
+          function displaySongs(recommendations) {
+            // Clear previous content
+            resultDiv.innerHTML = "";
+            console.log("Recommendations received:", recommendations);
+
+            // Fetch the favorite artist from previous data
+            const favorite_artist = nodes.find(
+              (node) => node.id === preferences
+            );
+
+            // Prepare new nodes and links
+            const newNodes = [favorite_artist];
+            const newLinks = [];
+
+            // Map recommendations to nodes and links
+            recommendations.forEach((artistName, i) => {
+              const artistNode = {
+                id: artistName,
+                group: i + 1,
+                image: data.find((d) => d.name === artistName)?.image_url,
+              };
+              newNodes.push(artistNode);
+              newLinks.push({
+                source: favorite_artist.id,
+                target: artistName,
+              });
+            });
+
+            // Create SVG element
+            const width = resultDiv.offsetWidth;
+            const height = 400;
+            const svg = d3
+              .select(resultDiv)
+              .append("svg")
+              .attr("width", "100%")
+              .attr("height", height);
+
+            // Set up simulation
+            const simulation = d3
+              .forceSimulation(newNodes)
+              .force(
+                "link",
+                d3.forceLink(newLinks).id((d) => d.id).distance(150)
+              )
+              .force("charge", d3.forceManyBody().strength(-300))
+              .force("center", d3.forceCenter(width / 2, height / 2));
+
+            // Draw links
+            const link = svg
+              .append("g")
+              .attr("class", "links")
+              .selectAll("line")
+              .data(newLinks)
+              .enter()
+              .append("line")
+              .attr("class", "link")
+              .attr("stroke-width", 2);
+
+            // Draw nodes
+            const node = svg
+              .append("g")
+              .attr("class", "nodes")
+              .selectAll("g")
+              .data(newNodes)
+              .enter()
+              .append("g")
+              .attr("class", "node")
+              .call(
+                d3
+                  .drag()
+                  .on("start", dragStarted)
+                  .on("drag", dragged)
+                  .on("end", dragEnded)
+              );
+
+            node
+              .append("circle")
+              .attr("r", 37)
+              .attr("fill", "rgba(0, 0, 255, 0.0)") // Blue with 0% opacity
+              .attr("stroke-width", 0);
+
+            node
+              .append("image")
+              .attr("xlink:href", (d) => d.image) // Set the image URL
+              .attr("x", -30) // Center the image horizontally
+              .attr("y", -30) // Center the image vertically
+              .attr("width", 60) // Set image width
+              .attr("height", 60) // Set image height
+              .attr("clip-path", "circle(30px at center)"); // Optional: Make the image circular
+
+            node
+              .append("text")
+              .attr("dx", 0)
+              .attr("dy", 45)
+              .attr("text-anchor", "middle")
+              .text((d) => d.id)
+              .attr("font-size", "12px");
+
+            simulation.on("tick", () => {
+              link
+                .attr("x1", (d) => d.source.x)
+                .attr("y1", (d) => d.source.y)
+                .attr("x2", (d) => d.target.x)
+                .attr("y2", (d) => d.target.y);
+
+              node.attr("transform", (d) => `translate(${d.x},${d.y})`);
+            });
+          }
+
+        } else {
+          // Handle errors returned by the server
+          resultDiv.innerText = data.error || "An unexpected error occurred.";
+        }
+      } catch (error) {
+        // Handle network or unexpected errors
+        const resultDiv = document.getElementById("recommendations-result");
+        resultDiv.innerText =
+          "An error occurred while connecting to the server.";
+        console.error("Error:", error);
+      }
+    });
+</script>
+
 {% endblock %}

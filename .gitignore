@@ -1,2 +1,5 @@
 .DStore
 .venv
+*env
+spotify_dataset.csv
+__pycache__
