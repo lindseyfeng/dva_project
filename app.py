@@ -7,10 +7,18 @@ from datetime import datetime
 import spotify_artist_query as spotify
 from scipy.sparse import csr_matrix, vstack
 import requests
+from pytrends.request import TrendReq
+import json
+import ast
+import csv
+import io
+
+
+
 
 
 SEARCH_API_URL = "https://api.chartmetric.com/api/search"
-AUTH_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mzk4ODkzOSwidGltZXN0YW1wIjoxNzMyMzY0NjA5NzAyLCJpYXQiOjE3MzIzNjQ2MDksImV4cCI6MTczMjM2ODIwOX0.UTpsLhDf1lPdlRGC8UM2_EjrubW2lMqwq_nuImzD_FY"
+AUTH_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mzk4ODkzOSwidGltZXN0YW1wIjoxNzMyMzg5NDM3ODQ3LCJpYXQiOjE3MzIzODk0MzcsImV4cCI6MTczMjM5MzAzN30.VabJfSrLaXExg__-7z7ATYXs3HBfCWnDgy4Q2itacYs"
 ALBUMS_API_URL = "https://api.chartmetric.com/api/artist/{artist_id}/albums"
 
 # Headers for authorization
@@ -78,13 +86,93 @@ def music_recommendations():
     return render_template("music_recommendations.html")
 
 
+# @app.route('/popular-artists', methods=['GET', 'POST'])
+# def popular_artists():
+#     if request.method == 'POST':
+#         artist_name = request.form.get('artist_name')
+#         headers = {"Authorization": AUTH_TOKEN}
+        
+#         # # Fetch artist data based on the entered name
+#         # search_response = requests.get(f"{SEARCH_API_URL}?q={artist_name}&limit=1", headers=headers)
+#         # search_response.raise_for_status()  # Raise HTTP errors
+#         # search_data = search_response.json().get('obj', {}).get('artists', [])
+        
+#         # if not search_data:
+#         #     print("No artists found in the search response.")
+#         #     return render_template('popular_artists.html', error="No artists found.")
+        
+#         # first_artist = search_data[0]
+#         # first_artist_id = first_artist.get('id')
+#         # print(f"First Artist: {first_artist['name']} (ID: {first_artist_id})")
+        
+#         # if not first_artist_id:
+#         #     print("First artist ID is missing.")
+#         #     return render_template('popular_artists.html', error="Artist ID not found.")
+        
+#         # Render the template with artist info
+#         # try:
+#         #     pytrends = TrendReq(hl='en-US', tz=360)
+#         #     kw_list = [artist_name]
+#         #     pytrends.build_payload(kw_list, cat=0, timeframe='today 12-m', geo='', gprop='')
+#         #     trends_data = pytrends.interest_over_time()
+#         #     if not trends_data.empty:
+#         #         # Reset index to convert the date index into a column
+#         #         trends_data = trends_data.reset_index()
+#         #         # Convert DataFrame to a list of dictionaries for easy use in templates
+#         #         trends_data_list = trends_data.to_dict(orient='records')
+#         #     else:
+#         #         print("No Google Trends data found.")
+#         #         trends_data_list = []
+#         # except Exception as e:
+#         #     print(f"Error fetching Google Trends data: {e}")
+#         #     trends_data_list = []
+#         # print("reach here")
+#         # print(trends_data_list)
+
+#         trends_data_list = "[{'date': Timestamp('2023-11-19 00:00:00'), 'Taylor Swift': 46, 'isPartial': False}, {'date': Timestamp('2023-11-20 00:00:00'), 'Taylor Swift': 50, 'isPartial': False}]"
+
+#         # Step 1: Replace `Timestamp` with a simple representation
+#         trends_data_list = trends_data_list.replace("Timestamp('", '"').replace("')", '"')
+#         trends_data_list = trends_data_list.replace("'", '"')
+#         print(trends_data_list) 
+#         # Step 2: Use `ast.literal_eval` to safely evaluate the string as a Python object
+#         data = ast.literal_eval(trends_data_list)
+#         print(data)
+#         for entry in data:
+#             entry['date'] = datetime.strptime(entry['date'], '%Y-%m-%d %H:%M:%S')
+
+#         # Step 2: Extract the date and "Taylor Swift" value
+#         csv_data = [(entry['date'].strftime('%Y-%m-%d'), entry['Taylor Swift']) for entry in data]
+
+#         # Step 3: Save to CSV string
+#         csv_output = io.StringIO()
+#         writer = csv.writer(csv_output)
+#         writer.writerow(['date', f'test'])  # Write header
+#         writer.writerows(csv_data)  # Write data
+
+#         # Retrieve the CSV string
+#         csv_variable = csv_output.getvalue()
+#         csv_output.close()
+#         #print(csv_variable)
+#         df = pd.read_csv(io.StringIO(csv_variable))
+#         json_data = df.to_json(orient='records')
+#         print(json_data)
+#         first_artist = {}
+#         first_artist['name'] = "test"
+#         first_artist['id'] = 123
+#         return render_template('popular_artists.html', artist=first_artist, trends_data=json_data)
+#     else:
+#         # Render the form for GET requests
+#         return render_template('popular_artists.html')
+
+
 @app.route('/popular-artists', methods=['GET', 'POST'])
 def popular_artists():
     if request.method == 'POST':
         artist_name = request.form.get('artist_name')
         headers = {"Authorization": AUTH_TOKEN}
         
-        # Fetch artist data based on the entered name
+        # # Fetch artist data based on the entered name
         search_response = requests.get(f"{SEARCH_API_URL}?q={artist_name}&limit=1", headers=headers)
         search_response.raise_for_status()  # Raise HTTP errors
         search_data = search_response.json().get('obj', {}).get('artists', [])
@@ -100,17 +188,46 @@ def popular_artists():
         if not first_artist_id:
             print("First artist ID is missing.")
             return render_template('popular_artists.html', error="Artist ID not found.")
-        
-        # Render the template with artist info
-        return render_template('popular_artists.html', artist=first_artist)
-    else:
-        # Render the form for GET requests
-        return render_template('popular_artists.html')
 
+        # Sample data (replace with your actual data fetching logic)
+        data = [
+            {"date": "2023-11-19", "Taylor Swift": 46},
+            {"date": "2023-10-20", "Taylor Swift": 40},
+            {"date": "2023-09-20", "Taylor Swift": 60},
+            {"date": "2023-08-20", "Taylor Swift": 57},
+            {"date": "2023-07-20", "Taylor Swift": 57},
+            {"date": "2023-06-20", "Taylor Swift": 57},
+            {"date": "2023-05-20", "Taylor Swift": 53},
+            {"date": "2023-04-20", "Taylor Swift": 56},
+            {"date": "2023-03-20", "Taylor Swift": 70},
+            {"date": "2023-02-20", "Taylor Swift": 40},
+            {"date": "2023-01-20", "Taylor Swift": 50},
+            {"date": "2022-12-20", "Taylor Swift": 60},
+        ]
+        albums_url = f"https://api.chartmetric.com/api/artist/{first_artist_id}/albums"
+        params = {
+            'limit': 1,
+            'isPrimary': 'true'  # Ensure this is passed as a string
+        }
+        albums_response = requests.get(albums_url, headers=headers, params=params)
+        albums_response.raise_for_status()
+        albums_data = albums_response.json().get('obj', [])
+        # Create artist info with the exact same name as in the data
+        print(albums_data)
+        return render_template(
+            'popular_artists.html', 
+            albums_data=albums_data,
+            artist=first_artist,
+
+            trends_data=data  
+        )
+    else:
+        return render_template('popular_artists.html')
 
 # Route to Get Recommendations (Existing)
 @app.route("/get-recommendations", methods=["POST"])
 def get_recommendations():
+
     try:
         # Extract the JSON data sent from the frontend
         data = request.get_json()
