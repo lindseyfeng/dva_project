@@ -1,193 +1,242 @@
-{% extends "base.html" %}
-
-{% block title %}
-Music Recommendations
-{% endblock %}
-
+{% extends "base.html" %} {% block title %} Music Recommendations {% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/music_recommendations.css') }}">
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/music_recommendations.css') }}"
+/>
 <style>
-    body {
-        font-family: 'Arial', sans-serif;
-        background-color: #f8f9fa;
-        color: #333;
-    }
-    h1 {
-        text-align: center;
-        color: #007bff;
-    }
-    #music-recommendations-form {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 20px;
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    }
-    .form-group label {
-        font-weight: bold;
-        margin-bottom: 8px;
-        display: block;
-    }
-    .form-control {
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        padding: 10px;
-    }
-    .btn-primary {
-        background-color: #007bff;
-        border-color: #007bff;
-    }
-    .btn-primary:hover {
-        background-color: #0056b3;
-        border-color: #0056b3;
-    }
-    #artist-info {
-        margin: 20px auto;
-        padding: 20px;
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    }
-    #chart-container {
-        margin-top: 20px;
-    }
-    .tooltip {
-        pointer-events: none;
-        position: absolute;
-    }
-    .alert {
-        max-width: 600px;
-        margin: 20px auto;
-    }
+  body {
+    font-family: "Arial", sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+  }
+  h1 {
+    text-align: center;
+    color: #007bff;
+  }
+  #music-recommendations-form {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  .form-group label {
+    font-weight: bold;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .form-control {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+  }
+  .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+  }
+  .btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+  }
+  #artist-info {
+    margin: 20px auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  #chart-container {
+    margin-top: 20px;
+  }
+  .tooltip {
+    pointer-events: none;
+    position: absolute;
+  }
+  .alert {
+    max-width: 600px;
+    margin: 20px auto;
+  }
 </style>
-{% endblock %}
-
-{% block content %}
+{% endblock %} {% block content %}
 <div class="container">
-    <h1 class="mt-5">Search for an Artist</h1>
+  <h1 class="mt-5">Search for an Artist</h1>
 
-    <form id="music-recommendations-form" class="mt-4" method="post" action="/popular-artists">
-        <div class="form-group">
-            <label for="artist_name">Enter Artist Name:</label>
-            <input type="text" id="artist_name" name="artist_name" class="form-control" required>
-        </div>
-        <button type="submit" class="btn btn-primary w-100">Search</button>
-    </form>
-
-    {% if artist %}
-    <div class="row mt-4">
-        <div id="artist-info" class="col-md-4">
-            <h2>Artist Information</h2>
-            <p><strong>Name:</strong> {{ artist.name }}</p>
-        </div>
-        <div id="chart-container" class="col-md-8" style="height: 400px;"></div>
+  <form id="popular-artists-form" class="mt-4">
+    <div class="form-group">
+      <label for="artist_name">Enter Artist Name:</label>
+      <input
+        type="text"
+        id="artist_name"
+        name="artist_name"
+        class="form-control"
+        required
+      />
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            let trendsData;
-            try {
-                trendsData = {{ trends_data | tojson | safe }};
-            } catch (e) {
-                console.error('Error parsing trends data:', e);
-                return;
-            }
+    <button type="submit" class="btn btn-primary w-100">Search</button>
+  </form>
 
-            const artistName = "{{ artist.name }}";
+  <div id="beautiful-graph" class="mt-4"></div>
 
-            if (trendsData && Array.isArray(trendsData) && trendsData.length > 0) {
-                renderLineChart(trendsData, artistName);
-            } else {
-                document.getElementById('chart-container').innerHTML = '<p class="text-center">No data available to display.</p>';
-            }
+  <script>
+    document
+      .getElementById("popular-artists-form")
+      .addEventListener("submit", async function (event) {
+        event.preventDefault();
 
-            function renderLineChart(data, artistName) {
-                d3.select("#chart-container").selectAll("*").remove();
+        const artist_name = document.getElementById("artist_name").value;
 
-                const margin = { top: 20, right: 30, bottom: 50, left: 50 };
-                const width = document.getElementById('chart-container').clientWidth - margin.left - margin.right;
-                const height = 400 - margin.top - margin.bottom;
+        // Send the data to the server
+        try {
+          const response = await fetch("/popular-artist-info", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ artist_name: artist_name }),
+          });
 
-                const parsedData = [];
-                data.forEach(d => {
-                    if (d && d.date && d[artistName] !== undefined) {
-                        try {
-                            parsedData.push({
-                                date: new Date(d.date),
-                                value: parseFloat(d[artistName])
-                            });
-                        } catch (e) {}
-                    }
-                });
+          // Parse the JSON response
+          const data = await response.json();
+          data = data;
+          console.log("Data received:", data); // For debugging purposes
 
-                parsedData.sort((a, b) => a.date - b.date);
+          const margin = { top: 20, right: 30, bottom: 50, left: 50 };
+          const width =
+            document.getElementById("beautiful-graph").clientWidth -
+            margin.left -
+            margin.right;
+          const height = 400 - margin.top - margin.bottom;
 
-                if (parsedData.length === 0) {
-                    document.getElementById('chart-container').innerHTML = '<p class="text-center">No valid data available to display.</p>';
-                    return;
-                }
+          const svg = d3
+            .select("beautiful-graph")
+            .append("svg")
+            .attr(
+              "viewBox",
+              `0 0 ${width + margin.left + margin.right} ${
+                height + margin.top + margin.bottom
+              }`
+            )
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
 
-                const svg = d3.select("#chart-container")
-                    .append("svg")
-                    .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
-                    .append("g")
-                    .attr("transform", `translate(${margin.left},${margin.top})`);
+          const x = d3
+            .scaleTime()
+            .domain(d3.extent(parsedData, (d) => d.date))
+            .range([0, width]);
 
-                const x = d3.scaleTime()
-                    .domain(d3.extent(parsedData, d => d.date))
-                    .range([0, width]);
+          const y = d3
+            .scaleLinear()
+            .domain([0, d3.max(parsedData, (d) => d.value)])
+            .range([height, 0]);
 
-                const y = d3.scaleLinear()
-                    .domain([0, d3.max(parsedData, d => d.value)])
-                    .range([height, 0]);
+          svg
+            .append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(
+              d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%Y-%m-%d"))
+            )
+            .selectAll("text")
+            .attr("transform", "rotate(-45)")
+            .style("text-anchor", "end");
+        } catch (error) {
+          // Handle network or unexpected errors
+          const resultDiv = document.getElementById("recommendations-result");
+          resultDiv.innerText =
+            "An error occurred while connecting to the server.";
+          console.error("Error:", error);
+        }
+      });
 
-                svg.append("g")
-                    .attr("transform", `translate(0,${height})`)
-                    .call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%Y-%m-%d")))
-                    .selectAll("text")
-                    .attr("transform", "rotate(-45)")
-                    .style("text-anchor", "end");
+    // if (trendsData && Array.isArray(trendsData) && trendsData.length > 0) {
+    //     renderLineChart(trendsData, artistName);
+    // } else {
+    //     document.getElementById('chart-container').innerHTML = '<p class="text-center">No data available to display.</p>';
+    // }
 
-                svg.append("g").call(d3.axisLeft(y));
+    // function renderLineChart(data, artistName) {
+    //     d3.select("#chart-container").selectAll("*").remove();
 
-                const line = d3.line()
-                    .x(d => x(d.date))
-                    .y(d => y(d.value));
+    //     const margin = { top: 20, right: 30, bottom: 50, left: 50 };
+    //     const width = document.getElementById('chart-container').clientWidth - margin.left - margin.right;
+    //     const height = 400 - margin.top - margin.bottom;
 
-                svg.append("path")
-                    .datum(parsedData)
-                    .attr("fill", "none")
-                    .attr("stroke", "#007bff")
-                    .attr("stroke-width", 2)
-                    .attr("d", line);
+    //     const parsedData = [];
+    //     data.forEach(d => {
+    //         if (d && d.date && d[artistName] !== undefined) {
+    //             try {
+    //                 parsedData.push({
+    //                     date: new Date(d.date),
+    //                     value: parseFloat(d[artistName])
+    //                 });
+    //             } catch (e) {}
+    //         }
+    //     });
 
-                svg.selectAll(".dot")
-                    .data(parsedData)
-                    .enter()
-                    .append("circle")
-                    .attr("class", "dot")
-                    .attr("cx", d => x(d.date))
-                    .attr("cy", d => y(d.value))
-                    .attr("r", 4)
-                    .attr("fill", "#007bff");
+    //     parsedData.sort((a, b) => a.date - b.date);
 
-                svg.append("text")
-                    .attr("x", width / 2)
-                    .attr("y", -10)
-                    .attr("text-anchor", "middle")
-                    .style("font-size", "16px")
-                    .text(`${artistName} Popularity Over Time`);
-            }
-        });
-    </script>
-    {% endif %}
+    //     if (parsedData.length === 0) {
+    //         document.getElementById('chart-container').innerHTML = '<p class="text-center">No valid data available to display.</p>';
+    //         return;
+    //     }
 
-    {% if error %}
-    <div class="alert alert-danger mt-4">{{ error }}</div>
-    {% endif %}
+    //     const svg = d3.select("#chart-container")
+    //         .append("svg")
+    //         .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+    //         .append("g")
+    //         .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    //     const x = d3.scaleTime()
+    //         .domain(d3.extent(parsedData, d => d.date))
+    //         .range([0, width]);
+
+    //     const y = d3.scaleLinear()
+    //         .domain([0, d3.max(parsedData, d => d.value)])
+    //         .range([height, 0]);
+
+    //     svg.append("g")
+    //         .attr("transform", `translate(0,${height})`)
+    //         .call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%Y-%m-%d")))
+    //         .selectAll("text")
+    //         .attr("transform", "rotate(-45)")
+    //         .style("text-anchor", "end");
+
+    //     svg.append("g").call(d3.axisLeft(y));
+
+    //     const line = d3.line()
+    //         .x(d => x(d.date))
+    //         .y(d => y(d.value));
+
+    //     svg.append("path")
+    //         .datum(parsedData)
+    //         .attr("fill", "none")
+    //         .attr("stroke", "#007bff")
+    //         .attr("stroke-width", 2)
+    //         .attr("d", line);
+
+    //     svg.selectAll(".dot")
+    //         .data(parsedData)
+    //         .enter()
+    //         .append("circle")
+    //         .attr("class", "dot")
+    //         .attr("cx", d => x(d.date))
+    //         .attr("cy", d => y(d.value))
+    //         .attr("r", 4)
+    //         .attr("fill", "#007bff");
+
+    //     svg.append("text")
+    //         .attr("x", width / 2)
+    //         .attr("y", -10)
+    //         .attr("text-anchor", "middle")
+    //         .style("font-size", "16px")
+    //         .text(`${artistName} Popularity Over Time`);
+    // }
+  </script>
+  {% if error %}
+  <div class="alert alert-danger mt-4">{{ error }}</div>
+  {% endif %}
 </div>
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script src="https://d3js.org/d3.v7.min.js"></script>
 {% endblock %}
