@@ -32,12 +32,9 @@ def summarize_text(text, device):
     """
     Summarizes the text using a transformer model.
     """
-    # Initialize the summarization pipeline
     summarizer = pipeline(
         "summarization", model="facebook/bart-large-cnn", device=device
     )
-
-    # Adjust max_length and min_length based on input length
     input_length = len(text.split())
     if input_length < 50:
         max_len = min(50, int(input_length * 0.9))
@@ -68,15 +65,11 @@ def generate_image(prompt, output_file="album_art.png"):
     """
     model_id = "runwayml/stable-diffusion-v1-5"
     device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    # Load the model
     pipe = StableDiffusionPipeline.from_pretrained(
         model_id,
         torch_dtype=torch.float16 if device == "cuda" else torch.float32,
     )
     pipe = pipe.to(device)
-
-    # Generate the image
     if device == "cuda":
         with torch.autocast(device):
             image = pipe(prompt, num_inference_steps=50, guidance_scale=7.5).images[0]
@@ -90,40 +83,59 @@ def generate_image(prompt, output_file="album_art.png"):
 
 
 def main():
-    # Ensure NLTK data is downloaded
     install_nltk_data()
+    ################################################
+    #
+    #
+    # 
+    #
+    #
+    # Enter lyrics or prompt here to generate album art
+    #
+    #
+    #
+    #
+    ################################################
+    lyrics = "Can you hear the drums Fernando? \
+                I remember long ago another starry night like this \
+                In the firelight Fernando \
+                You were humming to yourself and softly strumming your guitar \
+                I could hear the distant drums \
+                And sounds of bugle calls were coming from afar \
+                They were closer now Fernando \
+                Every hour every minute seemed to last eternally \
+                I was so afraid Fernando \
+                We were young and full of life and none of us prepared to die \
+                And Im not ashamed to say \
+                The roar of guns and cannons almost made me cry \
+                There was something in the air that night \
+                The stars were bright, Fernando \
+                They were shining there for you and me \
+                For liberty, Fernando \
+                Though I never thought that we could lose \
+                There's no regret \
+                If I had to do the same again \
+                I would, my friend, Fernando \
+                If I had to do the same again \
+                I would, my friend, Fernando" 
 
-    # Provide the path to your lyrics file
-    lyrics_file = "lyrics.txt"
-
-    # Read the lyrics
-    lyrics = read_lyrics(lyrics_file)
-    if not lyrics:
-        return
-
-    # Print the lyrics to confirm
     print(f"Lyrics:\n{lyrics}\n")
 
-    # Determine device for summarizer
     device = 0 if torch.cuda.is_available() else -1
 
-    # Summarize the lyrics
     print("Summarizing lyrics...")
     summary = summarize_text(lyrics, device)
     print(f"\nSummary:\n{summary}\n")
 
-    # Clean the summary
     clean_summary = clean_text(summary)
     print(f"Clean Summary:\n{clean_summary}\n")
 
-    # Create the image prompt
     image_prompt = f"An album cover art illustrating: {clean_summary}. Digital art."
     print(f"Image Prompt:\n{image_prompt}\n")
 
-    # Generate the image
     print("Generating album art...")
     generate_image(image_prompt)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":#
     main()
