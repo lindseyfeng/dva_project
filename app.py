@@ -18,7 +18,7 @@ import io
 
 
 SEARCH_API_URL = "https://api.chartmetric.com/api/search"
-AUTH_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mzk4ODkzOSwidGltZXN0YW1wIjoxNzMyMzg5NDM3ODQ3LCJpYXQiOjE3MzIzODk0MzcsImV4cCI6MTczMjM5MzAzN30.VabJfSrLaXExg__-7z7ATYXs3HBfCWnDgy4Q2itacYs"
+AUTH_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mzk4ODkzOSwidGltZXN0YW1wIjoxNzMyNDEwMzkwNjk3LCJpYXQiOjE3MzI0MTAzOTAsImV4cCI6MTczMjQxMzk5MH0.-LLgmVj05hd7zTdw07qyowYyM0y78kdw6IoB1jnhaik"
 ALBUMS_API_URL = "https://api.chartmetric.com/api/artist/{artist_id}/albums"
 
 # Headers for authorization
@@ -204,19 +204,10 @@ def popular_artists():
             {"date": "2023-01-20", "Taylor Swift": 50},
             {"date": "2022-12-20", "Taylor Swift": 60},
         ]
-        albums_url = f"https://api.chartmetric.com/api/artist/{first_artist_id}/albums"
-        params = {
-            'limit': 1,
-            'isPrimary': 'true'  # Ensure this is passed as a string
-        }
-        albums_response = requests.get(albums_url, headers=headers, params=params)
-        albums_response.raise_for_status()
-        albums_data = albums_response.json().get('obj', [])
+
         # Create artist info with the exact same name as in the data
-        print(albums_data)
         return render_template(
             'popular_artists.html', 
-            albums_data=albums_data,
             artist=first_artist,
 
             trends_data=data  
